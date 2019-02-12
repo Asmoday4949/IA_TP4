@@ -51,23 +51,20 @@ namespace IAOthelloFH
                 return new Tuple<int, int>(-1, -1);
             }
 
-            var nextMove = AlphaBeta(logic, level, int.MaxValue, true);
+            var nextMove = AlphaBeta(logic, level, int.MaxValue, whiteTurn);
             return new Tuple<int, int>(nextMove.Item2.Column, nextMove.Item2.Row);
         }
 
         /// <summary>
         /// Check whether a state is terminal
         /// </summary>
-        /// <returns></returns>
+        /// <returns>True if state is terminal</returns>
         private bool IsTerminal()
         {
             var possibleMoves = GetAllPossibleMoves();
             if (possibleMoves.Count == 0)
             {
-                SwitchPlayer();
-                GetAllPossibleMoves();
-                SwitchPlayer();
-                return IsGameFinished;
+                return true;
             }
             else
             {
@@ -76,40 +73,89 @@ namespace IAOthelloFH
         }
 
         /// <summary>
-        /// Simple alpha-beta algorithm
+        /// Implementation of negamax algorithm with alpha beta pruning. A node is represented by a game board. 
         /// </summary>
         /// <param name="nodeBoard">A particular game state</param>
         /// <param name="depth">The maximum tree depth</param>
-        /// <param name="parentValue"></param>
-        /// <param name="maximizingPlayer"></param>
-        /// <returns></returns>
+        /// <param name="parentValue">The parent node value</param>
+        /// <param name="maximizingPlayer">Whether node is a maximizimer or minimizer. True if maximizer. </param>
+        /// <returns>A tuple containing the value as it's first item and the position corresponding to the best
+        /// predicted play as it's second item. </returns>
         private Tuple<int, IntPosition> AlphaBeta(BoardIA nodeBoard, int depth, int parentValue, bool maximizingPlayer)
         {
             if (depth == 0 || nodeBoard.IsTerminal())
             {
-                return new Tuple<int, IntPosition>(nodeBoard.CurrentPlayerData.NumberOfPawns, new IntPosition(-1, -1));
+                var heuristicValue = nodeBoard.GetHeuristicValue();
+                return new Tuple<int, IntPosition>(heuristicValue, new IntPosition(-1, -1));
             }
             else
             {
-                int optVal = maximizingPlayer ? -int.MaxValue : int.MaxValue;
-                IntPosition optOp = new IntPosition(-1, -1);
+                int bestValue = maximizingPlayer ? -int.MaxValue : int.MaxValue;
+                IntPosition bestMove = new IntPosition(-1, -1);
+
                 var childPositions = nodeBoard.GetAllPossibleMoves();
                 foreach (var child in childPositions)
                 {
-                    var returnVal = AlphaBeta(PosToBoard(child, nodeBoard), depth - 1, optVal, !maximizingPlayer);
+                    var childValue = AlphaBeta(PosToBoard(child, nodeBoard), depth - 1, bestValue, !maximizingPlayer);
                     int minOrMax = maximizingPlayer ? 1 : -1;
-                    if (returnVal.Item1 * minOrMax > optVal * minOrMax)
+                    if (childValue.Item1 * minOrMax > bestValue * minOrMax)
                     {
-                        optVal = returnVal.Item1;
-                        optOp = child;
-                        if (optVal * minOrMax > parentValue * minOrMax)
+                        bestValue = childValue.Item1;
+                        bestMove = child;
+                        if (bestValue * minOrMax > parentValue * minOrMax)
                         {
                             break;
                         }
                     }
                 }
-                return new Tuple<int, IntPosition>(optVal, optOp);
+                return new Tuple<int, IntPosition>(bestValue, bestMove);
             }
+        }
+
+        private int GetHeuristicValue()
+        {
+
+            var coinParity = 100 * (GetWhiteScore() - GetBlackScore()) / (GetWhiteScore() + GetBlackScore());
+            if (PlayerTurn == Player.Black)
+            {
+                SwitchPlayer();
+            }
+            var possibleWhiteMoves = GetAllPossibleMoves().Count();
+            SwitchPlayer();
+            var possibleBlackMoves = GetAllPossibleMoves().Count();
+            int mobility = 0;
+            if (possibleBlackMoves + possibleWhiteMoves != 0)
+            {
+                mobility = (int)(100 * ((double)(possibleWhiteMoves - possibleBlackMoves) / (double)(possibleWhiteMoves + possibleBlackMoves)));
+            }
+            int nbCorners = 0;
+            int nbCornersWhite = GetNbCoinsInCorners(true);
+            int nbCornersBlack = GetNbCoinsInCorners(false);
+            if (nbCornersWhite + nbCornersBlack != 0)
+            {
+                nbCorners = 10 * (nbCornersWhite - nbCornersBlack) / (nbCornersWhite + nbCornersBlack);
+            }
+            return (int)(coinParity + mobility + nbCorners);
+        }
+
+        private int GetNbCoinsInCorners(bool whitePlayer)
+        {
+            int nbCorners = 0;
+            int playerInt = whitePlayer ? 0 : 1;
+            List<IntPosition> listCorners = new List<IntPosition>();
+            listCorners.Add(new IntPosition(0, 0));
+            listCorners.Add(new IntPosition(0, 6));
+            listCorners.Add(new IntPosition(8, 0));
+            listCorners.Add(new IntPosition(8, 6));
+            foreach (var corner in listCorners)
+            {
+                var slotValue = GameBoard[corner.Column, corner.Row];
+                if (slotValue == playerInt)
+                {
+                    nbCorners++;
+                }
+            }
+            return nbCorners;
         }
 
         /// <summary>
@@ -121,12 +167,21 @@ namespace IAOthelloFH
         /// <returns>A new AIBoard with the updated game state</returns>
         private BoardIA PosToBoard(IntPosition position, BoardIA sourceBoard)
         {
+            int[,] gameState = new int[9, 7];
+            for (int i = 0; i < 9; i++)
+            {
+                for (int j = 0; j < 7; j++)
+                {
+                    gameState[i, j] = sourceBoard.GameBoard[i, j];
+                }
+            }
+
             BoardIA newBoard = new BoardIA
             {
-                GameBoard = sourceBoard.GameBoard,
+                GameBoard = gameState,
                 PlayerTurn = sourceBoard.PlayerTurn
             };
-            newBoard.PlayMove(position.Column, position.Row, PlayerTurn == Player.White);
+            newBoard.PlayMove(position.Column, position.Row, sourceBoard.PlayerTurn == Player.White);
             return newBoard;
         }
 
@@ -136,6 +191,14 @@ namespace IAOthelloFH
             return GetWhitePlayerData().NumberOfPawns;
         }
 
+
+        /// <summary>
+        /// Check whether the given position is legal.
+        /// </summary>
+        /// <param name="column">Column number of the position to check</param>
+        /// <param name="line">Line number of the position to check</param>
+        /// <param name="isWhite">True if player turn is white</param>
+        /// <returns>True if move is legal</returns>
         public bool IsPlayable(int column, int line, bool isWhite)
         {
             Player currentPlayer = PlayerTurn;
@@ -146,6 +209,14 @@ namespace IAOthelloFH
             return playableSlots.Contains(positionToCheck);
         }
 
+
+        /// <summary>
+        /// Play a move and alter the board accordingly. Returns true if the move was legal.
+        /// </summary>
+        /// <param name="column">The column corresponding to the position of the move</param>
+        /// <param name="line">The line corresponding to the position of the move</param>
+        /// <param name="isWhite">True if the current player turn is white</param>
+        /// <returns>True if move was legal.</returns>
         public bool PlayMove(int column, int line, bool isWhite)
         {
             PlayerTurn = isWhite ? Player.White : Player.Black;
