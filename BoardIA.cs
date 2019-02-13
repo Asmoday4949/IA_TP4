@@ -14,26 +14,62 @@ namespace IAOthelloFH
 {
     class BoardIA : OthelloLogic, IPlayable.IPlayable
     {
+        /// <summary>
+        /// Default constructor: create a grid of size 9x7
+        /// </summary>
         public BoardIA(): base()
         {
         }
-
+        
+        /// <summary>
+        /// Return the current black score (number of pawns)
+        /// </summary>
+        /// <returns>Black score</returns>
         public int GetBlackScore()
         {
             UpdatePlayersScore();
             return GetBlackPlayerData().NumberOfPawns;
         }
 
+        /// <summary>
+        /// Return the internal board
+        /// </summary>
+        /// <returns>Board</returns>
         public int[,] GetBoard()
         {
             return GameBoard;
         }
 
+        /// <summary>
+        /// Return the name of the IA
+        /// </summary>
+        /// <returns>Name of the IA</returns>
         public string GetName()
         {
             return "ArcOthelloFH";
         }
 
+        /// <summary>
+        /// Asks the game engine next (valid) move given a game position
+        /// The board assumes following standard move notation:
+        ///                             v
+        ///             A B C D E F G H I
+        ///            [0 1 2 3 4 5 6 7 8]    (first index)
+        ///       1[0]
+        ///       2[1]
+        ///       3[2]        w K
+        ///       4[3]        K w 
+        ///       5[4]
+        ///       6[5]
+        ///      >7[6]                  x
+        ///       
+        ///   {Column;Line}
+        ///  E.g.:  'w' on D3 in game notation will map to {3,2}, and 'x' on I7  to {8,6}
+        /// </summary>
+        /// <param name="game">a 2D board with integer values: 0 for white 1 for black and -1 for empty tiles. First index for the column, second index for the line</param>
+        /// <param name="level">an integer value to set the level of the IA, 5 normally</param>
+        /// <param name="whiteTurn">true if white players turn, false otherwise</param>
+        /// <returns>The column and line indices. Will return {-1,-1} as PASS if no possible move </returns>
         public Tuple<int, int> GetNextMove(int[,] game, int level, bool whiteTurn)
         {
             int[,] gameState = new int[9, 7];
@@ -118,6 +154,10 @@ namespace IAOthelloFH
             }
         }
 
+        /// <summary>
+        /// Compute the heuristic with the following values : coin parity, mobility, corners captured
+        /// </summary>
+        /// <returns>Heuristic value</returns>
         private int GetHeuristicValue()
         {
 
@@ -144,6 +184,11 @@ namespace IAOthelloFH
             return (int)(coinParity + mobility + nbCorners);
         }
 
+        /// <summary>
+        /// Get the number of coins in the corners for black or white player
+        /// </summary>
+        /// <param name="whitePlayer">True : white player, False : Black player</param>
+        /// <returns>Number of coins in the corners</returns>
         private int GetNbCoinsInCorners(bool whitePlayer)
         {
             int nbCorners = 0;
@@ -191,6 +236,10 @@ namespace IAOthelloFH
             return newBoard;
         }
 
+        /// <summary>
+        /// Get the current white score (number of pawns)
+        /// </summary>
+        /// <returns>White score</returns>
         public int GetWhiteScore()
         {
             UpdatePlayersScore();
