@@ -1,8 +1,14 @@
-﻿using System;
+﻿/// -----------------------------------------------------------------------------------------------------
+/// Authors : Haldenwang Thibault && Malik Fleury
+/// Date : 12.02.2019
+/// Update : 13.02.2019
+/// 
+/// Description : AlphaBeta algo for reversi.
+/// -----------------------------------------------------------------------------------------------------
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace IAOthelloFH
 {
