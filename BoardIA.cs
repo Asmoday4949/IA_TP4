@@ -168,13 +168,13 @@ namespace IAOthelloFH
             {
                 SwitchPlayer();
             }
-            var possibleWhiteMoves = GetAllPossibleMoves().Count();
+            List<IntPosition> possibleWhiteMoves = GetAllPossibleMoves();
             SwitchPlayer();
-            var possibleBlackMoves = GetAllPossibleMoves().Count();
+            List<IntPosition> possibleBlackMoves = GetAllPossibleMoves();
             int mobility = 0;
-            if (possibleBlackMoves + possibleWhiteMoves != 0)
+            if (possibleBlackMoves.Count + possibleWhiteMoves.Count != 0)
             {
-                mobility = (int)(100 * ((double)(possibleWhiteMoves - possibleBlackMoves) / (double)(possibleWhiteMoves + possibleBlackMoves)));
+                mobility = (int)(100 * ((double)(possibleWhiteMoves.Count - possibleBlackMoves.Count) / (double)(possibleWhiteMoves.Count + possibleBlackMoves.Count)));
             }
 
             // Corners
@@ -183,11 +183,81 @@ namespace IAOthelloFH
             int nbCornersBlack = GetNbCoinsInCorners(false);
             if (nbCornersWhite + nbCornersBlack != 0)
             {
-                nbCorners = 10 * (nbCornersWhite - nbCornersBlack) / (nbCornersWhite + nbCornersBlack);
+                nbCorners = 100 * (nbCornersWhite - nbCornersBlack) / (nbCornersWhite + nbCornersBlack);
             }
 
+            // Stability (stable, not stable)
+            int stability = 0;
+            int blackStability = GetStability(possibleBlackMoves, false);
+            int whiteStability = GetStability(possibleWhiteMoves, true);
+            if(blackStability + whiteStability != 0)
+            {
+                stability = 100 * (whiteStability - blackStability) / (whiteStability + blackStability);
+            }
 
-            return (int)(coinParity + mobility + nbCorners);
+            return (int)(coinParity + mobility + nbCorners + stability);
+        }
+
+        /// <summary>
+        /// Get stability value for the list of moves
+        /// </summary>
+        /// <param name="moves">List of moves</param>
+        /// <returns>Stability score</returns>
+        private int GetStability(List<IntPosition> moves, bool isWhite)
+        {
+            int stability = 0;
+            foreach(IntPosition move in moves)
+            {
+                if(IsMoveStable(move, isWhite))
+                {
+                    stability++;
+                }
+                else
+                {
+                    stability--;
+                }
+            }
+
+            return stability;
+        }
+
+        /// <summary>
+        /// Check if a move is stable
+        /// </summary>
+        /// <param name="position">Position to check stability</param>
+        /// <returns>True : stable, False : not stable</returns>
+        private bool IsMoveStable(IntPosition position, bool isWhite)
+        {
+            List<IntPosition> result = new List<IntPosition>();
+            int playerId = isWhite ? (int)Player.White : (int)Player.Black;
+
+            for (int rowDelta = -1; rowDelta <= 1; rowDelta++)
+            {
+                for (int columnDelta = -1; columnDelta <= 1; columnDelta++)
+                {
+                    try
+                    {
+                        IntPosition nextPosition = new IntPosition(position.Column + columnDelta, position.Row + rowDelta);
+
+                        while (IsPositionValid(nextPosition) && GameBoard[nextPosition.Column, nextPosition.Row] == playerId)
+                        {
+                            nextPosition = new IntPosition(nextPosition.Column + columnDelta, nextPosition.Row + rowDelta);
+                        }
+
+                        if (IsPositionValid(nextPosition) && GameBoard[nextPosition.Column, nextPosition.Row] == (int)GetOppositePlayer((Player)playerId))
+                        {
+                            if (IsPossibleMove(nextPosition, new IntPosition(-columnDelta, -rowDelta), result))
+                                return true;
+                        }
+                    }
+                    catch(Exception exc)
+                    {
+                        Console.WriteLine(exc.Message);
+                    }
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
