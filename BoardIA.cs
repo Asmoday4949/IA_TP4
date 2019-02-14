@@ -160,8 +160,10 @@ namespace IAOthelloFH
         /// <returns>Heuristic value</returns>
         private int GetHeuristicValue()
         {
-
+            // Parity
             var coinParity = 100 * (GetWhiteScore() - GetBlackScore()) / (GetWhiteScore() + GetBlackScore());
+
+            // Mobility
             if (PlayerTurn == Player.Black)
             {
                 SwitchPlayer();
@@ -174,6 +176,8 @@ namespace IAOthelloFH
             {
                 mobility = (int)(100 * ((double)(possibleWhiteMoves - possibleBlackMoves) / (double)(possibleWhiteMoves + possibleBlackMoves)));
             }
+
+            // Corners
             int nbCorners = 0;
             int nbCornersWhite = GetNbCoinsInCorners(true);
             int nbCornersBlack = GetNbCoinsInCorners(false);
@@ -181,6 +185,8 @@ namespace IAOthelloFH
             {
                 nbCorners = 10 * (nbCornersWhite - nbCornersBlack) / (nbCornersWhite + nbCornersBlack);
             }
+
+
             return (int)(coinParity + mobility + nbCorners);
         }
 
