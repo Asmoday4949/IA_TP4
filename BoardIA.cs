@@ -161,7 +161,7 @@ namespace OthelloIAFH
         private int GetHeuristicValue()
         {
             // Parity
-            var coinParity = 100 * (GetWhiteScore() - GetBlackScore()) / (GetWhiteScore() + GetBlackScore());
+            int coinParity = (int)(100 * ((double)(GetWhiteScore() - GetBlackScore())) / ((double)(GetWhiteScore() + GetBlackScore())));
 
             // Mobility
             if (PlayerTurn == Player.Black)
@@ -183,20 +183,19 @@ namespace OthelloIAFH
             int nbCornersBlack = GetNbCoinsInCorners(false);
             if (nbCornersWhite + nbCornersBlack != 0)
             {
-                nbCorners = 100 * (nbCornersWhite - nbCornersBlack) / (nbCornersWhite + nbCornersBlack);
+                nbCorners = (int)(100 * ((double)(nbCornersWhite - nbCornersBlack)) / ((double)(nbCornersWhite + nbCornersBlack)));
             }
 
             // Stability (stable, not stable)
-            
             int stability = 0;
             int blackStability = GetStability(possibleBlackMoves, false);
             int whiteStability = GetStability(possibleWhiteMoves, true);
             if(blackStability + whiteStability != 0)
             {
-                stability = 100 * (whiteStability - blackStability) / (whiteStability + blackStability);
+                stability = (int)(100 * ((double)(whiteStability - blackStability)) / ((double)(whiteStability + blackStability)));
             }
 
-            return (int)(coinParity + mobility + nbCorners + stability);
+            return (int)(coinParity + mobility + nbCorners /*+ stability*/);
         }
 
         /// <summary>
@@ -229,8 +228,17 @@ namespace OthelloIAFH
         /// <returns>True : stable, False : not stable</returns>
         private bool IsMoveStable(IntPosition position, bool isWhite)
         {
+            int[,] gameBoardSave = CopyArray(GameBoard);
             List<IntPosition> result = new List<IntPosition>();
             int playerId = isWhite ? (int)Player.White : (int)Player.Black;
+
+            GameBoard[position.Column, position.Row] = playerId;
+            List<IntPosition> pawnsToFlip = GetPawnsToFlip(position);
+
+            foreach(IntPosition pawnPos in pawnsToFlip)
+            {
+                GameBoard[pawnPos.Column, pawnPos.Row] = (int)(GetOppositePlayer((Player)playerId));
+            }
 
             // Tests valid moves for the opposite players
             SwitchPlayer();
@@ -254,6 +262,7 @@ namespace OthelloIAFH
                             {
                                 if (IsPossibleMove(nextPosition, new IntPosition(-columnDelta, -rowDelta), result))
                                 {
+                                    GameBoard = gameBoardSave;
                                     SwitchPlayer();
                                     return false;
                                 }
@@ -268,7 +277,23 @@ namespace OthelloIAFH
             }
 
             SwitchPlayer();
+            GameBoard = gameBoardSave;
             return true;
+        }
+
+        int[,] CopyArray(int[,] arraySource)
+        {
+            int[,] arrayDest = new int[9,7];
+
+            for (int i = 0; i < 9; i++)
+            {
+                for (int j = 0; j < 7; j++)
+                {
+                    arrayDest[i, j] = arraySource[i, j];
+                }
+            }
+
+            return arrayDest;
         }
 
         /// <summary>
