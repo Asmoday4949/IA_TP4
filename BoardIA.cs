@@ -183,7 +183,7 @@ namespace OthelloIAFH
             int nbCornersBlack = GetNbCoinsInCorners(false);
             if (nbCornersWhite + nbCornersBlack != 0)
             {
-                nbCorners = 100 * (nbCornersWhite - nbCornersBlack) / (nbCornersWhite + nbCornersBlack);
+                nbCorners = 10 * (nbCornersWhite - nbCornersBlack) / (nbCornersWhite + nbCornersBlack);
             }
 
             // Stability (stable, not stable)
