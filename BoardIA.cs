@@ -183,11 +183,11 @@ namespace OthelloIAFH
             int nbCornersBlack = GetNbCoinsInCorners(false);
             if (nbCornersWhite + nbCornersBlack != 0)
             {
-                nbCorners = 10 * (nbCornersWhite - nbCornersBlack) / (nbCornersWhite + nbCornersBlack);
+                nbCorners = 100 * (nbCornersWhite - nbCornersBlack) / (nbCornersWhite + nbCornersBlack);
             }
 
             // Stability (stable, not stable)
-            /*
+            
             int stability = 0;
             int blackStability = GetStability(possibleBlackMoves, false);
             int whiteStability = GetStability(possibleWhiteMoves, true);
@@ -195,9 +195,8 @@ namespace OthelloIAFH
             {
                 stability = 100 * (whiteStability - blackStability) / (whiteStability + blackStability);
             }
-            */
 
-            return (int)(coinParity + mobility + nbCorners /* + stability*/);
+            return (int)(coinParity + mobility + nbCorners + stability);
         }
 
         /// <summary>
@@ -233,33 +232,43 @@ namespace OthelloIAFH
             List<IntPosition> result = new List<IntPosition>();
             int playerId = isWhite ? (int)Player.White : (int)Player.Black;
 
+            // Tests valid moves for the opposite players
+            SwitchPlayer();
+
             for (int rowDelta = -1; rowDelta <= 1; rowDelta++)
             {
                 for (int columnDelta = -1; columnDelta <= 1; columnDelta++)
                 {
-                    try
+                    if (!(columnDelta == 0 && rowDelta == 0))
                     {
-                        IntPosition nextPosition = new IntPosition(position.Column + columnDelta, position.Row + rowDelta);
-
-                        while (IsPositionValid(nextPosition) && GameBoard[nextPosition.Column, nextPosition.Row] == playerId)
+                        try
                         {
-                            nextPosition = new IntPosition(nextPosition.Column + columnDelta, nextPosition.Row + rowDelta);
-                        }
+                            IntPosition nextPosition = new IntPosition(position.Column + columnDelta, position.Row + rowDelta);
 
-                        if (IsPositionValid(nextPosition) && GameBoard[nextPosition.Column, nextPosition.Row] == (int)GetOppositePlayer((Player)playerId))
-                        {
-                            if (IsPossibleMove(nextPosition, new IntPosition(-columnDelta, -rowDelta), result))
-                                return true;
+                            while (IsPositionValid(nextPosition) && GameBoard[nextPosition.Column, nextPosition.Row] == playerId)
+                            {
+                                nextPosition = new IntPosition(nextPosition.Column + columnDelta, nextPosition.Row + rowDelta);
+                            }
+
+                            if (IsPositionValid(nextPosition) && GameBoard[nextPosition.Column, nextPosition.Row] == (int)GetOppositePlayer((Player)playerId))
+                            {
+                                if (IsPossibleMove(nextPosition, new IntPosition(-columnDelta, -rowDelta), result))
+                                {
+                                    SwitchPlayer();
+                                    return false;
+                                }
+                            }
                         }
-                    }
-                    catch(Exception exc)
-                    {
-                        Console.WriteLine(exc.Message);
+                        catch (Exception exc)
+                        {
+                            Console.WriteLine(exc.Message);
+                        }
                     }
                 }
             }
 
-            return false;
+            SwitchPlayer();
+            return true;
         }
 
         /// <summary>
