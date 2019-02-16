@@ -1,7 +1,7 @@
 ﻿/// -----------------------------------------------------------------------------------------------------
 /// Authors : Haldenwang Thibault && Malik Fleury
 /// Date : 12.02.2019
-/// Update : 13.02.2019
+/// Update : 14.02.2019
 /// 
 /// Description : AlphaBeta algo for reversi.
 /// -----------------------------------------------------------------------------------------------------
@@ -10,7 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace IAOthelloFH
+namespace OthelloIAFH
 {
     class BoardIA : OthelloLogic, IPlayable.IPlayable
     {
@@ -187,6 +187,7 @@ namespace IAOthelloFH
             }
 
             // Stability (stable, not stable)
+            /*
             int stability = 0;
             int blackStability = GetStability(possibleBlackMoves, false);
             int whiteStability = GetStability(possibleWhiteMoves, true);
@@ -194,8 +195,9 @@ namespace IAOthelloFH
             {
                 stability = 100 * (whiteStability - blackStability) / (whiteStability + blackStability);
             }
+            */
 
-            return (int)(coinParity + mobility + nbCorners + stability);
+            return (int)(coinParity + mobility + nbCorners /* + stability*/);
         }
 
         /// <summary>

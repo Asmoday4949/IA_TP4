@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using System.ComponentModel;
 
-namespace IAOthelloFH
+namespace OthelloIAFH
 {
     public enum Player { White = 0, Black = 1 };
 

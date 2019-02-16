@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
 
-namespace IAOthelloFH
+namespace OthelloIAFH
 {
     public enum SlotContent { Nothing = -1, White = 0, Black = 1 };
 
