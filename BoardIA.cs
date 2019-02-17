@@ -14,11 +14,33 @@ namespace OthelloIAFH
 {
     class BoardIA : OthelloLogic, IPlayable.IPlayable
     {
+        private readonly int EARLYGAME;
+        private readonly int MIDGAME;
+        private readonly int ENDGAME;
+
+        private readonly int[,] SQR_SCORE;
+
         /// <summary>
         /// Default constructor: create a grid of size 9x7
         /// </summary>
         public BoardIA(): base()
         {
+            int totalSize = GameBoard.GetLength(0) * GameBoard.GetLength(1);
+
+            EARLYGAME = totalSize * 1 / 3;
+            MIDGAME = totalSize * 2 / 3;
+            ENDGAME = totalSize;
+
+            SQR_SCORE = new int[,]{ { 100, -10, 8, 6, 8, -10, 100 },
+                                    { -10, -30, 0, 0, 0, -30, -10 },
+                                    { 8, -4, 7, 4, 7, -4, 8},
+                                    { 6, -3, 4, 0, 4, -3, 6},
+                                    { 6, -3, 0, 0, 0, -3, 6},
+                                    { 6, -3, 4, 0, 4, -3, 6},
+                                    { 8, -4, 7, 4, 7, -4, 8},
+                                    { -10, -30, 0, 0, 0, -30, -10 },
+                                    { 100, -10, 8, 6, 8, -10, 100 }
+                                 };
         }
         
         /// <summary>
@@ -186,6 +208,7 @@ namespace OthelloIAFH
                 nbCorners = (int)(100 * ((double)(nbCornersWhite - nbCornersBlack)) / ((double)(nbCornersWhite + nbCornersBlack)));
             }
 
+            
             // Stability (stable, not stable)
             int stability = 0;
             int blackStability = GetStability(possibleBlackMoves, false);
@@ -195,7 +218,35 @@ namespace OthelloIAFH
                 stability = (int)(100 * ((double)(whiteStability - blackStability)) / ((double)(whiteStability + blackStability)));
             }
 
-            return (int)(coinParity + mobility + nbCorners /*+ stability*/);
+            // Disc square
+            int positionScore = 0;
+            int whitePositionScore = GetPositionScore(true);
+            int blackPositionScore = GetPositionScore(false);
+            if (blackPositionScore + whitePositionScore != 0)
+            {
+                positionScore = (int)(100 * ((double)(whitePositionScore - blackPositionScore)) / ((double)(whitePositionScore + blackPositionScore)));
+            }
+
+            return coinParity + stability + nbCorners + mobility + positionScore;
+        }
+
+        private int GetPositionScore(bool isWhite)
+        {
+            int playerId = isWhite ? (int)Player.White : (int)Player.Black;
+            int score = 0;
+
+            for (int column = 0; column < 9; column++)
+            {
+                for (int line = 0; line < 7; line++)
+                {
+                    if (GameBoard[column, line] == playerId)
+                    {
+                        score += SQR_SCORE[column, line];
+                    }
+                }
+            }
+
+            return score;
         }
 
         /// <summary>
