@@ -93,7 +93,8 @@ namespace OthelloIAFH
                 return new Tuple<int, int>(-1, -1);
             }
 
-            var nextMove = AlphaBeta(logic, level, int.MaxValue, whiteTurn);
+            int startValue = whiteTurn ? -int.MaxValue : int.MaxValue;
+            var nextMove = AlphaBeta(logic, level, startValue, whiteTurn);
             return new Tuple<int, int>(nextMove.Item2.Column, nextMove.Item2.Row);
         }
 
@@ -345,6 +346,7 @@ namespace OthelloIAFH
                 PlayerTurn = sourceBoard.PlayerTurn
             };
             newBoard.PlayMove(position.Column, position.Row, sourceBoard.PlayerTurn == Player.White);
+            newBoard.SwitchPlayer();
             return newBoard;
         }
 
