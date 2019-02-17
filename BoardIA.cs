@@ -93,8 +93,7 @@ namespace OthelloIAFH
                 return new Tuple<int, int>(-1, -1);
             }
 
-            int startValue = whiteTurn ? -int.MaxValue : int.MaxValue;
-            var nextMove = AlphaBeta(logic, level, startValue, whiteTurn);
+            var nextMove = AlphaBeta(logic, level, int.MinValue, true);     // Always minimum value (int.MinValue) and we maximize (true), whatever the color...
             return new Tuple<int, int>(nextMove.Item2.Column, nextMove.Item2.Row);
         }
 
